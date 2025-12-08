@@ -232,7 +232,8 @@ export const AuthProvider = ({ children }) => {
         logout,
         createUser,
         updateUser,
-        deleteUser: removeUser
+        deleteUser: removeUser,
+        getAllUsers: getUsers // Export direct access to users list
     };
 
     return (

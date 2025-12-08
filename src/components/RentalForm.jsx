@@ -43,7 +43,11 @@ const RentalForm = ({ rental, onSave, onClose }) => {
 
     useEffect(() => {
         // Load custom platforms
-        setCustomPlatforms(getCustomPlatforms());
+        const loadPlatforms = async () => {
+            const platforms = await getCustomPlatforms();
+            setCustomPlatforms(platforms);
+        };
+        loadPlatforms();
     }, []);
 
     // Combine default and custom platforms
@@ -65,12 +69,16 @@ const RentalForm = ({ rental, onSave, onClose }) => {
         }
     };
 
-    const handleAddCustomPlatform = () => {
+    const handleAddCustomPlatform = async () => {
         const trimmedName = formData.newPlatform.trim();
-        if (trimmedName && addCustomPlatform(trimmedName)) {
-            setCustomPlatforms(getCustomPlatforms());
-            setFormData(prev => ({ ...prev, platform: trimmedName, newPlatform: '' }));
-            setShowAddPlatform(false);
+        if (trimmedName) {
+            const success = await addCustomPlatform(trimmedName);
+            if (success) {
+                const platforms = await getCustomPlatforms();
+                setCustomPlatforms(platforms);
+                setFormData(prev => ({ ...prev, platform: trimmedName, newPlatform: '' }));
+                setShowAddPlatform(false);
+            }
         }
     };
 

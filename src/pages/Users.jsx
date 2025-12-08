@@ -8,6 +8,7 @@ import { formatDate } from '../utils/dateHelpers';
 const Users = () => {
     const { getAllUsers, createUser, updateUser, deleteUser } = useAuth();
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showUserForm, setShowUserForm] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
 
@@ -15,42 +16,59 @@ const Users = () => {
         loadUsers();
     }, []);
 
-    const loadUsers = () => {
-        const allUsers = getAllUsers();
-        setUsers(allUsers);
+    const loadUsers = async () => {
+        try {
+            setLoading(true);
+            const allUsers = await getAllUsers();
+            setUsers(allUsers);
+        } catch (error) {
+            console.error('Error loading users:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleSaveUser = (userData) => {
+    const handleSaveUser = async (userData) => {
         let result;
 
-        if (editingUser) {
-            // Update existing user
-            result = updateUser(editingUser.id, userData);
-        } else {
-            // Create new user
-            result = createUser(userData);
-        }
+        try {
+            if (editingUser) {
+                // Update existing user
+                result = await updateUser(editingUser.id, userData);
+            } else {
+                // Create new user
+                result = await createUser(userData);
+            }
 
-        if (result.success) {
-            setShowUserForm(false);
-            setEditingUser(null);
-            loadUsers();
-        } else {
-            alert(result.error);
+            if (result.success) {
+                setShowUserForm(false);
+                setEditingUser(null);
+                await loadUsers();
+            } else {
+                alert(result.error);
+            }
+        } catch (error) {
+            console.error('Error saving user:', error);
+            alert('Ocurrió un error al guardar el usuario');
         }
     };
 
-    const handleDelete = (userId) => {
+    const handleDelete = async (userId) => {
         if (!confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')) {
             return;
         }
 
-        const result = deleteUser(userId);
+        try {
+            const result = await deleteUser(userId);
 
-        if (result.success) {
-            loadUsers();
-        } else {
-            alert(result.error);
+            if (result.success) {
+                await loadUsers();
+            } else {
+                alert(result.error);
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('Error al eliminar el usuario');
         }
     };
 
