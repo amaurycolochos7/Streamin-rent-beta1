@@ -1,172 +1,354 @@
-// Storage keys
-const USERS_KEY = 'streaming_rental_users';
-const RENTALS_KEY = 'streaming_rental_rentals';
-const SESSION_KEY = 'streaming_rental_session';
-const RENTAL_COUNTER_KEY = 'streaming_rental_counter';
+import { supabase } from '../lib/supabase';
 
-// User storage functions
-export const getUsers = () => {
+// ===== USER MANAGEMENT =====
+
+export const getUsers = async () => {
     try {
-        const users = localStorage.getItem(USERS_KEY);
-        return users ? JSON.parse(users) : [];
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
     } catch (error) {
-        console.error('Error getting users:', error);
+        console.error('Error fetching users:', error);
         return [];
     }
 };
 
-export const saveUsers = (users) => {
+export const getUserByUsername = async (username) => {
     try {
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
-        return true;
-    } catch (error) {
-        console.error('Error saving users:', error);
-        return false;
-    }
-};
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .single();
 
-// Rental storage functions
-export const getRentals = () => {
-    try {
-        const rentals = localStorage.getItem(RENTALS_KEY);
-        return rentals ? JSON.parse(rentals) : [];
+        if (error) throw error;
+        return data;
     } catch (error) {
-        console.error('Error getting rentals:', error);
-        return [];
-    }
-};
-
-export const saveRentals = (rentals) => {
-    try {
-        localStorage.setItem(RENTALS_KEY, JSON.stringify(rentals));
-        return true;
-    } catch (error) {
-        console.error('Error saving rentals:', error);
-        return false;
-    }
-};
-
-// Session storage functions
-export const getSession = () => {
-    try {
-        const session = localStorage.getItem(SESSION_KEY);
-        return session ? JSON.parse(session) : null;
-    } catch (error) {
-        console.error('Error getting session:', error);
+        console.error('Error fetching user:', error);
         return null;
     }
 };
 
-export const saveSession = (session) => {
+export const saveUser = async (user) => {
     try {
-        if (session) {
-            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        // Check if user exists
+        const existing = await getUserByUsername(user.username);
+
+        if (existing && existing.id !== user.id) {
+            // Update existing user
+            const { data, error } = await supabase
+                .from('users')
+                .update({
+                    password: user.password,
+                    full_name: user.fullName,
+                    role: user.role,
+                    currency: user.currency
+                })
+                .eq('id', existing.id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
         } else {
-            localStorage.removeItem(SESSION_KEY);
+            // Insert new user
+            const { data, error } = await supabase
+                .from('users')
+                .insert({
+                    username: user.username,
+                    password: user.password,
+                    full_name: user.fullName,
+                    role: user.role,
+                    currency: user.currency || '$'
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
         }
+    } catch (error) {
+        console.error('Error saving user:', error);
+        throw error;
+    }
+};
+
+export const deleteUser = async (userId) => {
+    try {
+        const { error } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', userId);
+
+        if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Error saving session:', error);
+        console.error('Error deleting user:', error);
         return false;
     }
 };
 
-// Rental ID counter functions
-export const getRentalCounter = () => {
+// ===== RENTAL MANAGEMENT =====
+
+let rentalIdCounter = null;
+
+const getRentalIdCounter = async () => {
+    if (rentalIdCounter === null) {
+        try {
+            const { data, error } = await supabase
+                .from('rentals')
+                .select('rental_id')
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const lastId = data[0].rental_id;
+                const match = lastId.match(/R-(\d+)/);
+                rentalIdCounter = match ? parseInt(match[1]) : 0;
+            } else {
+                rentalIdCounter = 0;
+            }
+        } catch (error) {
+            console.error('Error getting rental ID counter:', error);
+            rentalIdCounter = 0;
+        }
+    }
+    return rentalIdCounter;
+};
+
+export const generateRentalId = async () => {
+    const counter = await getRentalIdCounter();
+    rentalIdCounter = counter + 1;
+    return `R-${String(rentalIdCounter).padStart(4, '0')}`;
+};
+
+export const getRentals = async (userId = null) => {
     try {
-        const counter = localStorage.getItem(RENTAL_COUNTER_KEY);
-        return counter ? parseInt(counter) : 0;
+        let query = supabase
+            .from('rentals')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (userId) {
+            query = query.eq('user_id', userId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        // Convert snake_case to camelCase for compatibility
+        return (data || []).map(rental => ({
+            id: rental.id,
+            rentalId: rental.rental_id,
+            userId: rental.user_id,
+            platform: rental.platform,
+            customerName: rental.customer_name,
+            accountType: rental.account_type,
+            profileName: rental.profile_name,
+            accountEmail: rental.account_email,
+            accountPassword: rental.account_password,
+            price: parseFloat(rental.price),
+            duration: rental.duration,
+            startDate: rental.start_date,
+            expirationDate: rental.expiration_date,
+            notes: rental.notes,
+            replacements: [] // We'll load these separately if needed
+        }));
     } catch (error) {
-        console.error('Error getting rental counter:', error);
-        return 0;
+        console.error('Error fetching rentals:', error);
+        return [];
     }
 };
 
-export const incrementRentalCounter = () => {
+export const saveRental = async (rental) => {
     try {
-        const counter = getRentalCounter() + 1;
-        localStorage.setItem(RENTAL_COUNTER_KEY, counter.toString());
-        return counter;
-    } catch (error) {
-        console.error('Error incrementing rental counter:', error);
-        return null;
-    }
-};
-
-// Generate readable rental ID
-export const generateRentalId = () => {
-    const counter = incrementRentalCounter();
-    if (counter === null) return null;
-
-    // Format: R-0001, R-0002, etc.
-    return `R-${counter.toString().padStart(4, '0')}`;
-};
-
-// Initialize default admin user
-export const initializeDefaultAdmin = () => {
-    const users = getUsers();
-
-    // Check if any admin exists
-    const adminExists = users.some(user => user.role === 'admin');
-
-    if (!adminExists) {
-        const defaultAdmin = {
-            id: crypto.randomUUID(),
-            username: 'admin',
-            password: 'admin123', // In production, this should be hashed
-            role: 'admin',
-            currency: 'MXN$',
-            createdAt: new Date().toISOString(),
-            createdBy: 'system'
+        const rentalData = {
+            user_id: rental.userId,
+            platform: rental.platform,
+            customer_name: rental.customerName,
+            account_type: rental.accountType || 'full',
+            profile_name: rental.profileName || null,
+            account_email: rental.accountEmail,
+            account_password: rental.accountPassword,
+            price: rental.price,
+            duration: rental.duration,
+            start_date: rental.startDate,
+            expiration_date: rental.expirationDate,
+            notes: rental.notes || null
         };
 
-        users.push(defaultAdmin);
-        saveUsers(users);
+        if (rental.id) {
+            // Update existing rental
+            const { data, error } = await supabase
+                .from('rentals')
+                .update(rentalData)
+                .eq('id', rental.id)
+                .select()
+                .single();
 
-        console.log('Default admin user created');
-        return defaultAdmin;
+            if (error) throw error;
+            return data;
+        } else {
+            // Insert new rental
+            rentalData.rental_id = rental.rentalId || await generateRentalId();
+
+            const { data, error } = await supabase
+                .from('rentals')
+                .insert(rentalData)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        }
+    } catch (error) {
+        console.error('Error saving rental:', error);
+        throw error;
     }
-
-    return null;
 };
 
-// Custom platforms storage
-const CUSTOM_PLATFORMS_KEY = 'streaming_rental_custom_platforms';
-
-export const getCustomPlatforms = () => {
+export const deleteRental = async (rentalId) => {
     try {
-        const platforms = localStorage.getItem(CUSTOM_PLATFORMS_KEY);
-        return platforms ? JSON.parse(platforms) : [];
+        const { error } = await supabase
+            .from('rentals')
+            .delete()
+            .eq('id', rentalId);
+
+        if (error) throw error;
+        return true;
     } catch (error) {
-        console.error('Error getting custom platforms:', error);
+        console.error('Error deleting rental:', error);
+        return false;
+    }
+};
+
+// ===== REPLACEMENT MANAGEMENT =====
+
+export const getReplacements = async (rentalId) => {
+    try {
+        const { data, error } = await supabase
+            .from('replacements')
+            .select('*')
+            .eq('rental_id', rentalId)
+            .order('replaced_at', { ascending: false });
+
+        if (error) throw error;
+
+        return (data || []).map(r => ({
+            id: r.id,
+            rentalId: r.rental_id,
+            oldEmail: r.old_email,
+            oldPassword: r.old_password,
+            newEmail: r.new_email,
+            newPassword: r.new_password,
+            reason: r.reason,
+            replacedAt: r.replaced_at
+        }));
+    } catch (error) {
+        console.error('Error fetching replacements:', error);
         return [];
     }
 };
 
-export const saveCustomPlatforms = (platforms) => {
+export const saveReplacement = async (replacement) => {
     try {
-        localStorage.setItem(CUSTOM_PLATFORMS_KEY, JSON.stringify(platforms));
-        return true;
+        const { data, error } = await supabase
+            .from('replacements')
+            .insert({
+                rental_id: replacement.rentalId,
+                old_email: replacement.oldEmail,
+                old_password: replacement.oldPassword,
+                new_email: replacement.newEmail,
+                new_password: replacement.newPassword,
+                reason: replacement.reason || null
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     } catch (error) {
-        console.error('Error saving custom platforms:', error);
-        return false;
+        console.error('Error saving replacement:', error);
+        throw error;
     }
 };
 
-export const addCustomPlatform = (platformName) => {
+// ===== CUSTOM PLATFORMS =====
+
+export const getCustomPlatforms = async () => {
     try {
-        const platforms = getCustomPlatforms();
-        const trimmedName = platformName.trim();
-        if (!platforms.includes(trimmedName) && trimmedName) {
-            platforms.push(trimmedName);
-            platforms.sort(); // Keep alphabetically sorted
-            saveCustomPlatforms(platforms);
-            return true;
+        const { data, error } = await supabase
+            .from('custom_platforms')
+            .select('name')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+        return (data || []).map(p => p.name);
+    } catch (error) {
+        console.error('Error fetching custom platforms:', error);
+        return [];
+    }
+};
+
+export const addCustomPlatform = async (platformName) => {
+    try {
+        const trimmed = platformName.trim();
+
+        // Check if already exists
+        const { data: existing } = await supabase
+            .from('custom_platforms')
+            .select('name')
+            .eq('name', trimmed)
+            .single();
+
+        if (existing) {
+            return false; // Already exists
         }
-        return false;
+
+        const { error } = await supabase
+            .from('custom_platforms')
+            .insert({ name: trimmed });
+
+        if (error) throw error;
+        return true;
     } catch (error) {
         console.error('Error adding custom platform:', error);
         return false;
     }
 };
 
+// ===== INITIALIZATION =====
+
+export const initializeDatabase = async () => {
+    try {
+        // Check if admin user exists
+        const admin = await getUserByUsername('admin');
+
+        if (!admin) {
+            // Create default admin user
+            await saveUser({
+                username: 'admin',
+                password: 'admin123', // This should be hashed in production
+                fullName: 'Administrator',
+                role: 'admin',
+                currency: 'MXN$'
+            });
+            console.log('✅ Default admin user created');
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error initializing database:', error);
+        return false;
+    }
+};
+
+// Initialize on module load
+initializeDatabase();

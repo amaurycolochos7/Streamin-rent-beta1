@@ -5,7 +5,7 @@ import RentalCard from '../components/RentalCard';
 import RentalForm from '../components/RentalForm';
 import ReplacementForm from '../components/ReplacementForm';
 import { useAuth } from '../contexts/AuthContext';
-import { getRentals, saveRentals, generateRentalId } from '../utils/storage';
+import { getRentals, saveRental, deleteRental, generateRentalId, saveReplacement } from '../utils/storage';
 import { Plus, Search, Filter } from 'lucide-react';
 
 const Rentals = () => {
@@ -39,8 +39,8 @@ const Rentals = () => {
         filterRentals();
     }, [rentals, searchTerm, filterStatus]);
 
-    const loadRentals = () => {
-        const allRentals = getRentals();
+    const loadRentals = async () => {
+        const allRentals = await getRentals();
 
         // Filter rentals based on user role
         const userRentals = currentUser.role === 'admin'
@@ -81,43 +81,44 @@ const Rentals = () => {
         setFilteredRentals(filtered);
     };
 
-    const handleSaveRental = (rentalData) => {
-        const allRentals = getRentals();
+    const handleSaveRental = async (rentalData) => {
+        try {
+            if (editingRental) {
+                // Edit existing rental
+                await saveRental({
+                    id: editingRental.id,
+                    userId: currentUser.id,
+                    ...rentalData
+                });
+            } else {
+                // Create new rental
+                const rentalId = await generateRentalId();
+                await saveRental({
+                    rentalId,
+                    userId: currentUser.id,
+                    ...rentalData
+                });
+            }
 
-        if (editingRental) {
-            // Edit existing rental - keep the same rentalId
-            const updatedRentals = allRentals.map(r =>
-                r.id === editingRental.id
-                    ? { ...r, ...rentalData, updatedAt: new Date().toISOString() }
-                    : r
-            );
-            saveRentals(updatedRentals);
-        } else {
-            // Create new rental with generated rentalId
-            const newRental = {
-                id: crypto.randomUUID(),
-                rentalId: generateRentalId(), // Generate readable ID
-                userId: currentUser.id,
-                ...rentalData,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            allRentals.push(newRental);
-            saveRentals(allRentals);
+            setShowRentalForm(false);
+            setEditingRental(null);
+            await loadRentals();
+        } catch (error) {
+            console.error('Error saving rental:', error);
+            alert('Error al guardar la renta');
         }
-
-        setShowRentalForm(false);
-        setEditingRental(null);
-        loadRentals();
     };
 
-    const handleDelete = (rentalId) => {
+    const handleDelete = async (rentalId) => {
         if (!confirm('¿Estás seguro de eliminar esta renta?')) return;
 
-        const allRentals = getRentals();
-        const updatedRentals = allRentals.filter(r => r.id !== rentalId);
-        saveRentals(updatedRentals);
-        loadRentals();
+        try {
+            await deleteRental(rentalId);
+            await loadRentals();
+        } catch (error) {
+            console.error('Error deleting rental:', error);
+            alert('Error al eliminar la renta');
+        }
     };
 
     const handleEdit = (rental) => {
@@ -130,35 +131,24 @@ const Rentals = () => {
         setShowReplacementForm(true);
     };
 
-    const handleSaveReplacement = (replacementData) => {
-        const allRentals = getRentals();
-        const updatedRentals = allRentals.map(r => {
-            if (r.id === replacementRental.id) {
-                const replacements = r.replacements || [];
-                replacements.push(replacementData);
+    const handleSaveReplacement = async (replacementData) => {
+        try {
+            await saveReplacement({
+                rentalId: replacementRental.id,
+                oldEmail: replacementRental.accountEmail,
+                oldPassword: replacementRental.accountPassword,
+                newEmail: replacementData.newCredentials.email,
+                newPassword: replacementData.newCredentials.password,
+                reason: replacementData.reason
+            });
 
-                // Update credentials if provided
-                const updates = {
-                    replacements,
-                    updatedAt: new Date().toISOString()
-                };
-
-                if (replacementData.newCredentials.email) {
-                    updates.accountEmail = replacementData.newCredentials.email;
-                }
-                if (replacementData.newCredentials.password) {
-                    updates.accountPassword = replacementData.newCredentials.password;
-                }
-
-                return { ...r, ...updates };
-            }
-            return r;
-        });
-
-        saveRentals(updatedRentals);
-        setShowReplacementForm(false);
-        setReplacementRental(null);
-        loadRentals();
+            setShowReplacementForm(false);
+            setReplacementRental(null);
+            await loadRentals();
+        } catch (error) {
+            console.error('Error saving replacement:', error);
+            alert('Error al guardar la reposición');
+        }
     };
 
     return (

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getUsers, saveUsers, getSession, saveSession, initializeDefaultAdmin } from '../utils/storage';
+import { getUserByUsername, saveUser, getUsers, deleteUser } from '../utils/storage';
 import { hashPassword, validatePassword, generateUserId } from '../utils/auth';
 
 const AuthContext = createContext(null);
@@ -17,164 +17,211 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Initialize default admin and restore session on mount
-    useEffect(() => {
-        initializeDefaultAdmin();
-        const session = getSession();
-
-        if (session) {
-            // Verify user still exists
-            const users = getUsers();
-            const user = users.find(u => u.id === session.userId);
-
-            if (user) {
-                setCurrentUser({
-                    id: user.id,
-                    username: user.username,
-                    role: user.role,
-                    currency: user.currency || '$'
-                });
-                setIsAuthenticated(true);
-            } else {
-                // Clear invalid session
-                saveSession(null);
-            }
+    // Session management with localStorage (for client-side only)
+    const saveSession = (user) => {
+        if (user) {
+            localStorage.setItem('session', JSON.stringify({
+                userId: user.id,
+                username: user.username,
+                role: user.role,
+                currency: user.currency
+            }));
+        } else {
+            localStorage.removeItem('session');
         }
+    };
 
-        setLoading(false);
+    const getSession = () => {
+        try {
+            const session = localStorage.getItem('session');
+            return session ? JSON.parse(session) : null;
+        } catch {
+            return null;
+        }
+    };
+
+    // Initialize and restore session on mount
+    useEffect(() => {
+        const restoreSession = async () => {
+            const session = getSession();
+
+            if (session) {
+                // Verify user still exists in Supabase
+                const user = await getUserByUsername(session.username);
+
+                if (user) {
+                    setCurrentUser({
+                        id: user.id,
+                        username: user.username,
+                        fullName: user.full_name,
+                        role: user.role,
+                        currency: user.currency || '$'
+                    });
+                    setIsAuthenticated(true);
+                } else {
+                    // Clear invalid session
+                    saveSession(null);
+                }
+            }
+
+            setLoading(false);
+        };
+
+        restoreSession();
     }, []);
 
     // Login function
-    const login = (username, password) => {
-        const users = getUsers();
-        const user = users.find(u => u.username === username);
+    const login = async (username, password) => {
+        try {
+            const user = await getUserByUsername(username);
 
-        if (!user) {
-            return { success: false, error: 'Usuario no encontrado' };
+            if (!user) {
+                return { success: false, error: 'Usuario no encontrado' };
+            }
+
+            // Validate password
+            const isValid = validatePassword(password, user.password);
+
+            if (!isValid) {
+                return { success: false, error: 'Contraseña incorrecta' };
+            }
+
+            // Set user session
+            const sessionUser = {
+                id: user.id,
+                username: user.username,
+                fullName: user.full_name,
+                role: user.role,
+                currency: user.currency || '$'
+            };
+
+            setCurrentUser(sessionUser);
+            setIsAuthenticated(true);
+            saveSession(sessionUser);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Login error:', error);
+            return { success: false, error: 'Error al iniciar sesión' };
         }
-
-        // Simple password check (in production, use validatePassword with hashing)
-        if (user.password !== password) {
-            return { success: false, error: 'Contraseña incorrecta' };
-        }
-
-        const session = {
-            userId: user.id,
-            username: user.username,
-            role: user.role,
-            loginTime: new Date().toISOString()
-        };
-
-        saveSession(session);
-        setCurrentUser({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            currency: user.currency || '$'
-        });
-        setIsAuthenticated(true);
-
-        return { success: true };
     };
 
     // Logout function
     const logout = () => {
-        saveSession(null);
         setCurrentUser(null);
         setIsAuthenticated(false);
+        saveSession(null);
     };
 
-    // Create new user (admin only)
-    const createUser = (userData) => {
-        if (!currentUser || currentUser.role !== 'admin') {
-            return { success: false, error: 'No tienes permisos para crear usuarios' };
-        }
+    // Create new user
+    const createUser = async (userData) => {
+        try {
+            // Check if username already exists
+            const existing = await getUserByUsername(userData.username);
 
-        const users = getUsers();
-
-        // Check if username already exists
-        if (users.some(u => u.username === userData.username)) {
-            return { success: false, error: 'El nombre de usuario ya existe' };
-        }
-
-        const newUser = {
-            id: generateUserId(),
-            username: userData.username,
-            password: userData.password, // In production, hash this
-            role: userData.role,
-            currency: userData.currency || '$',
-            createdAt: new Date().toISOString(),
-            createdBy: currentUser.username
-        };
-
-        users.push(newUser);
-        saveUsers(users);
-
-        return { success: true, user: newUser };
-    };
-
-    // Update user (admin only)
-    const updateUser = (userId, updates) => {
-        if (!currentUser || currentUser.role !== 'admin') {
-            return { success: false, error: 'No tienes permisos para actualizar usuarios' };
-        }
-
-        const users = getUsers();
-        const userIndex = users.findIndex(u => u.id === userId);
-
-        if (userIndex === -1) {
-            return { success: false, error: 'Usuario no encontrado' };
-        }
-
-        // Don't allow changing username to an existing one
-        if (updates.username && updates.username !== users[userIndex].username) {
-            if (users.some(u => u.username === updates.username && u.id !== userId)) {
+            if (existing) {
                 return { success: false, error: 'El nombre de usuario ya existe' };
             }
+
+            // Hash password
+            const hashedPassword = hashPassword(userData.password);
+
+            // Save user to Supabase
+            const newUser = await saveUser({
+                username: userData.username,
+                password: hashedPassword,
+                fullName: userData.fullName,
+                role: userData.role || 'user',
+                currency: userData.currency || '$'
+            });
+
+            return { success: true, user: newUser };
+        } catch (error) {
+            console.error('Create user error:', error);
+            return { success: false, error: 'Error al crear usuario' };
         }
-
-        users[userIndex] = {
-            ...users[userIndex],
-            ...updates,
-            updatedAt: new Date().toISOString(),
-            updatedBy: currentUser.username
-        };
-
-        saveUsers(users);
-
-        return { success: true, user: users[userIndex] };
     };
 
-    // Delete user (admin only)
-    const deleteUser = (userId) => {
-        if (!currentUser || currentUser.role !== 'admin') {
-            return { success: false, error: 'No tienes permisos para eliminar usuarios' };
+    // Update user
+    const updateUser = async (userId, updates) => {
+        try {
+            const users = await getUsers();
+            const user = users.find(u => u.id === userId);
+
+            if (!user) {
+                return { success: false, error: 'Usuario no encontrado' };
+            }
+
+            // Check if username is being changed and if it's taken
+            if (updates.username && updates.username !== user.username) {
+                const existing = await getUserByUsername(updates.username);
+                if (existing && existing.id !== userId) {
+                    return { success: false, error: 'El nombre de usuario ya existe' };
+                }
+            }
+
+            // Prepare update data
+            const updateData = {
+                id: userId,
+                username: updates.username || user.username,
+                fullName: updates.fullName || user.full_name,
+                role: updates.role || user.role,
+                currency: updates.currency || user.currency,
+                password: updates.password ? hashPassword(updates.password) : user.password
+            };
+
+            // Save to Supabase
+            const updatedUser = await saveUser(updateData);
+
+            // Update current user if it's the logged-in user
+            if (currentUser && currentUser.id === userId) {
+                const newUserData = {
+                    id: updatedUser.id,
+                    username: updatedUser.username,
+                    fullName: updatedUser.full_name,
+                    role: updatedUser.role,
+                    currency: updatedUser.currency
+                };
+                setCurrentUser(newUserData);
+                saveSession(newUserData);
+            }
+
+            return { success: true, user: updatedUser };
+        } catch (error) {
+            console.error('Update user error:', error);
+            return { success: false, error: 'Error al actualizar usuario' };
         }
-
-        // Prevent deleting yourself
-        if (userId === currentUser.id) {
-            return { success: false, error: 'No puedes eliminar tu propia cuenta' };
-        }
-
-        const users = getUsers();
-        const filteredUsers = users.filter(u => u.id !== userId);
-
-        if (filteredUsers.length === users.length) {
-            return { success: false, error: 'Usuario no encontrado' };
-        }
-
-        saveUsers(filteredUsers);
-
-        return { success: true };
     };
 
-    // Get all users (admin only)
-    const getAllUsers = () => {
-        if (!currentUser || currentUser.role !== 'admin') {
-            return [];
-        }
+    // Delete user
+    const removeUser = async (userId) => {
+        try {
+            // Cannot delete yourself
+            if (currentUser && currentUser.id === userId) {
+                return { success: false, error: 'No puedes eliminar tu propia cuenta' };
+            }
 
-        return getUsers();
+            // Cannot delete if it's the last admin
+            const users = await getUsers();
+            const admins = users.filter(u => u.role === 'admin');
+
+            const userToDelete = users.find(u => u.id === userId);
+            if (userToDelete && userToDelete.role === 'admin' && admins.length <= 1) {
+                return { success: false, error: 'No puedes eliminar el último administrador' };
+            }
+
+            // Delete from Supabase
+            const success = await deleteUser(userId);
+
+            if (!success) {
+                return { success: false, error: 'Error al eliminar usuario' };
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Delete user error:', error);
+            return { success: false, error: 'Error al eliminar usuario' };
+        }
     };
 
     const value = {
@@ -185,8 +232,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         createUser,
         updateUser,
-        deleteUser,
-        getAllUsers
+        deleteUser: removeUser
     };
 
     return (
