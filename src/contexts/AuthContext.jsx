@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('session', JSON.stringify({
                 userId: user.id,
                 username: user.username,
+                fullName: user.fullName,
                 role: user.role,
                 currency: user.currency
             }));
@@ -46,21 +47,43 @@ export const AuthProvider = ({ children }) => {
             const session = getSession();
 
             if (session) {
-                // Verify user still exists in Supabase
-                const user = await getUserByUsername(session.username);
+                try {
+                    // Try to verify user still exists in Supabase
+                    // Use timeout to prevent hanging on slow connections
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('timeout')), 5000)
+                    );
 
-                if (user) {
+                    const userPromise = getUserByUsername(session.username);
+
+                    const user = await Promise.race([userPromise, timeoutPromise]);
+
+                    if (user) {
+                        // Update user data from Supabase
+                        setCurrentUser({
+                            id: user.id,
+                            username: user.username,
+                            fullName: user.full_name,
+                            role: user.role,
+                            currency: user.currency || '$'
+                        });
+                        setIsAuthenticated(true);
+                    } else {
+                        // User not found in database - clear session
+                        saveSession(null);
+                    }
+                } catch (error) {
+                    // On error (network issues, timeout, etc.), trust the cached session
+                    // This prevents logout on slow mobile connections
+                    console.warn('Session verification failed, using cached session:', error.message);
                     setCurrentUser({
-                        id: user.id,
-                        username: user.username,
-                        fullName: user.full_name,
-                        role: user.role,
-                        currency: user.currency || '$'
+                        id: session.userId,
+                        username: session.username,
+                        fullName: session.fullName,
+                        role: session.role,
+                        currency: session.currency || '$'
                     });
                     setIsAuthenticated(true);
-                } else {
-                    // Clear invalid session
-                    saveSession(null);
                 }
             }
 
