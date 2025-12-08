@@ -324,6 +324,34 @@ export const addCustomPlatform = async (platformName) => {
     }
 };
 
+// ===== INITIALIZATION =====
+
+export const initializeDatabase = async () => {
+    try {
+        // Check if admin user exists
+        const admin = await getUserByUsername('Jomoponse1');
+
+        if (!admin) {
+            // Import hashPassword for security
+            const { hashPassword } = await import('./auth.js');
+
+            // Create default admin user with custom credentials
+            await saveUser({
+                username: 'Jomoponse1',
+                password: hashPassword('Jomoponse'),
+                fullName: 'Administrador Principal',
+                role: 'admin',
+                currency: 'MXN$'
+            });
+            console.log('✅ Default admin user created: Jomoponse1');
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error initializing database:', error);
+        return false;
+    }
+};
 
 // Initialize on module load
 initializeDatabase();
