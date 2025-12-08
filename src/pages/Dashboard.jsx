@@ -23,8 +23,8 @@ const Dashboard = () => {
         loadRentals();
     }, [currentUser]);
 
-    const loadRentals = () => {
-        const allRentals = getRentals();
+    const loadRentals = async () => {
+        const allRentals = await getRentals();
 
         // Filter rentals based on user role
         const userRentals = currentUser.role === 'admin'
