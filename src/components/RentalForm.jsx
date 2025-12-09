@@ -27,6 +27,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
         platform: rental?.platform || '',
         newPlatform: '',
         customerName: rental?.customerName || '',
+        phoneNumber: rental?.phoneNumber || '',
         accountType: rental?.accountType || 'full', // 'full' or 'profile'
         profileName: rental?.profileName || '',
         duration: rental?.duration || 1,
@@ -121,6 +122,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
         const rentalData = {
             platform: formData.platform,
             customerName: formData.customerName,
+            phoneNumber: formData.phoneNumber || '',
             accountType: formData.accountType,
             profileName: formData.accountType === 'profile' ? formData.profileName : '',
             duration: parseInt(formData.duration),
@@ -228,6 +230,18 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                             placeholder="Ej: Juan Pérez"
                         />
                         {errors.customerName && <div style={{ color: 'var(--color-danger)', fontSize: '0.875rem', marginTop: 'var(--spacing-xs)' }}>{errors.customerName}</div>}
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Teléfono del Cliente (Opcional)</label>
+                        <input
+                            type="tel"
+                            name="phoneNumber"
+                            value={formData.phoneNumber}
+                            onChange={handleChange}
+                            className="form-input"
+                            placeholder="Ej: +52 123 456 7890"
+                        />
                     </div>
 
                     <div className="form-group">
