@@ -73,8 +73,8 @@ const Dashboard = () => {
                     </button>
                 </div>
 
-                {/* Subscription Widget - Show for all users */}
-                {currentUser.subscriptionEndDate && (
+                {/* Subscription Widget - Show ONLY for regular users (not admins) */}
+                {currentUser.role !== 'admin' && currentUser.subscriptionEndDate && (
                     <SubscriptionWidget subscriptionEndDate={currentUser.subscriptionEndDate} />
                 )}
 

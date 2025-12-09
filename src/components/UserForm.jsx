@@ -179,67 +179,69 @@ const UserForm = ({ user, onSave, onClose }) => {
                         </select>
                     </div>
 
-                    {/* Subscription Section */}
-                    <div style={{
-                        padding: 'var(--spacing-md)',
-                        background: 'rgba(168, 85, 247, 0.1)',
-                        border: '1px solid rgba(168, 85, 247, 0.3)',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: 'var(--spacing-lg)'
-                    }}>
-                        <h3 style={{
-                            fontSize: '1rem',
-                            marginBottom: 'var(--spacing-md)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'var(--spacing-sm)'
+                    {/* Subscription Section - ONLY for regular users */}
+                    {formData.role === 'user' && (
+                        <div style={{
+                            padding: 'var(--spacing-md)',
+                            background: 'rgba(168, 85, 247, 0.1)',
+                            border: '1px solid rgba(168, 85, 247, 0.3)',
+                            borderRadius: 'var(--radius-md)',
+                            marginBottom: 'var(--spacing-lg)'
                         }}>
-                            <Calendar size={18} />
-                            Suscripción
-                        </h3>
-
-                        <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
-                            <label className="form-label">Duración *</label>
-                            <select
-                                name="subscriptionDurationMonths"
-                                value={formData.subscriptionDurationMonths}
-                                onChange={handleChange}
-                                className="form-select"
-                            >
-                                {getSubscriptionDurationOptions().map(option => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
-                            <label className="form-label">Fecha de Inicio *</label>
-                            <input
-                                type="date"
-                                name="subscriptionStartDate"
-                                value={formData.subscriptionStartDate}
-                                onChange={handleChange}
-                                className="form-input"
-                            />
-                        </div>
-
-                        {calculatedEndDate && (
-                            <div style={{
-                                padding: 'var(--spacing-sm)',
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.875rem'
+                            <h3 style={{
+                                fontSize: '1rem',
+                                marginBottom: 'var(--spacing-md)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)'
                             }}>
-                                <strong>Fecha de Expiración:</strong>{' '}
-                                <span style={{ color: 'var(--color-primary)' }}>
-                                    {formatSubscriptionDate(calculatedEndDate)}
-                                </span>
+                                <Calendar size={18} />
+                                Suscripción
+                            </h3>
+
+                            <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+                                <label className="form-label">Duración *</label>
+                                <select
+                                    name="subscriptionDurationMonths"
+                                    value={formData.subscriptionDurationMonths}
+                                    onChange={handleChange}
+                                    className="form-select"
+                                >
+                                    {getSubscriptionDurationOptions().map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                        )}
-                    </div>
+
+                            <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+                                <label className="form-label">Fecha de Inicio *</label>
+                                <input
+                                    type="date"
+                                    name="subscriptionStartDate"
+                                    value={formData.subscriptionStartDate}
+                                    onChange={handleChange}
+                                    className="form-input"
+                                />
+                            </div>
+
+                            {calculatedEndDate && (
+                                <div style={{
+                                    padding: 'var(--spacing-sm)',
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    fontSize: '0.875rem'
+                                }}>
+                                    <strong>Fecha de Expiración:</strong>{' '}
+                                    <span style={{ color: 'var(--color-primary)' }}>
+                                        {formatSubscriptionDate(calculatedEndDate)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {formData.role === 'admin' && (
                         <div style={{
@@ -250,7 +252,7 @@ const UserForm = ({ user, onSave, onClose }) => {
                             marginBottom: 'var(--spacing-lg)',
                             fontSize: '0.875rem'
                         }}>
-                            ⚠️ Los administradores pueden crear y gestionar otros usuarios
+                            ⚠️ Los administradores tienen acceso ilimitado sin expiración
                         </div>
                     )}
 
