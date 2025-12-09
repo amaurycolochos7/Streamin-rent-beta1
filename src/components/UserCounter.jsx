@@ -44,145 +44,115 @@ const UserCounter = () => {
 
         return () => clearInterval(timer);
     }, []);
+    {/* Animated background gradient */ }
+    <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(120deg, transparent, rgba(139, 92, 246, 0.1), transparent)',
+        animation: 'shimmer 3s ease-in-out infinite',
+        pointerEvents: 'none'
+    }}></div>
 
-    // Format number with comma
-    const formatNumber = (num) => {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    };
+    {/* Icon with rotation animation */ }
+    <div style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        animation: 'iconFloat 2s ease-in-out infinite'
+    }}>
+        <div style={{
+            position: 'absolute',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent)',
+            animation: 'ripple 2s ease-out infinite'
+        }}></div>
+        <Users size={26} style={{
+            color: '#8b5cf6',
+            filter: 'drop-shadow(0 0 12px rgba(139, 92, 246, 0.7))',
+            position: 'relative',
+            zIndex: 1
+        }} />
+    </div>
 
-    return (
-        <>
-            <div style={{
-                position: 'fixed',
-                top: '24px',
-                right: '24px',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                padding: '16px 28px',
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.12))',
-                borderRadius: '24px',
-                border: '2px solid rgba(139, 92, 246, 0.25)',
-                backdropFilter: 'blur(16px)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                zIndex: 1000,
-                boxShadow: '0 20px 60px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                transform: isVisible ? 'translateY(0) scale(1)' : 'translateY(-20px) scale(0.9)',
-                opacity: isVisible ? 1 : 0,
-                transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                animation: 'gentlePulse 3s ease-in-out infinite',
-                overflow: 'hidden'
+    {/* Counter display */ }
+    <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '3px',
+        position: 'relative',
+        zIndex: 1
+    }}>
+        <div style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: '6px'
+        }}>
+            <span style={{
+                fontSize: '1.6rem',
+                fontWeight: 900,
+                background: 'linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4)',
+                backgroundSize: '200% 200%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                lineHeight: 1,
+                letterSpacing: '-0.02em',
+                animation: 'gradientShift 4s ease infinite',
+                textShadow: '0 0 30px rgba(139, 92, 246, 0.3)'
             }}>
-                {/* Animated background gradient */}
-                <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'linear-gradient(120deg, transparent, rgba(139, 92, 246, 0.1), transparent)',
-                    animation: 'shimmer 3s ease-in-out infinite',
-                    pointerEvents: 'none'
-                }}></div>
+                {formatNumber(displayCount)}
+            </span>
+            <TrendingUp size={16} style={{
+                color: '#10b981',
+                filter: 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.6))',
+                animation: 'trending 1.5s ease-in-out infinite'
+            }} />
+        </div>
+        <div style={{
+            fontSize: '0.7rem',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+        }}>
+            <span>Usando el Panel</span>
+            <div style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#10b981',
+                animation: 'liveBlink 2s ease-in-out infinite',
+                boxShadow: '0 0 10px rgba(16, 185, 129, 0.8)'
+            }}></div>
+        </div>
+    </div>
 
-                {/* Icon with rotation animation */}
-                <div style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    animation: 'iconFloat 2s ease-in-out infinite'
-                }}>
-                    <div style={{
-                        position: 'absolute',
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent)',
-                        animation: 'ripple 2s ease-out infinite'
-                    }}></div>
-                    <Users size={26} style={{
-                        color: '#8b5cf6',
-                        filter: 'drop-shadow(0 0 12px rgba(139, 92, 246, 0.7))',
-                        position: 'relative',
-                        zIndex: 1
-                    }} />
-                </div>
-
-                {/* Counter display */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '3px',
-                    position: 'relative',
-                    zIndex: 1
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        gap: '6px'
-                    }}>
-                        <span style={{
-                            fontSize: '1.6rem',
-                            fontWeight: 900,
-                            background: 'linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4)',
-                            backgroundSize: '200% 200%',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            lineHeight: 1,
-                            letterSpacing: '-0.02em',
-                            animation: 'gradientShift 4s ease infinite',
-                            textShadow: '0 0 30px rgba(139, 92, 246, 0.3)'
-                        }}>
-                            {formatNumber(displayCount)}
-                        </span>
-                        <TrendingUp size={16} style={{
-                            color: '#10b981',
-                            filter: 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.6))',
-                            animation: 'trending 1.5s ease-in-out infinite'
-                        }} />
-                    </div>
-                    <div style={{
-                        fontSize: '0.7rem',
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.12em',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                    }}>
-                        <span>Usando el Panel</span>
-                        <div style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            background: '#10b981',
-                            animation: 'liveBlink 2s ease-in-out infinite',
-                            boxShadow: '0 0 10px rgba(16, 185, 129, 0.8)'
-                        }}></div>
-                    </div>
-                </div>
-
-                {/* Plus badge - calculated from daily increase */}
-                <div style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '12px',
-                    fontSize: '0.65rem',
-                    fontWeight: 800,
-                    color: '#10b981',
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    padding: '2px 6px',
-                    borderRadius: '6px',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    animation: 'badgePop 2s ease-in-out infinite'
-                }}>
-                    +{20 * 30}/mes
-                </div>
-            </div>
-            <style>{`
+    {/* Plus badge - calculated from daily increase */ }
+    <div style={{
+        position: 'absolute',
+        top: '8px',
+        right: '12px',
+        fontSize: '0.65rem',
+        fontWeight: 800,
+        color: '#10b981',
+        background: 'rgba(16, 185, 129, 0.15)',
+        padding: '2px 6px',
+        borderRadius: '6px',
+        border: '1px solid rgba(16, 185, 129, 0.3)',
+        animation: 'badgePop 2s ease-in-out infinite'
+    }}>
+        +{20 * 30}/mes
+    </div>
+            </div >
+    <style>{`
                 @keyframes shimmer {
                     0%, 100% { transform: translateX(-100%); }
                     50% { transform: translateX(100%); }
