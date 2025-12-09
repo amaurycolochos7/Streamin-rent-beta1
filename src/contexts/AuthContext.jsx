@@ -17,6 +17,16 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    // Debug logging for state changes
+    useEffect(() => {
+        console.log('[AuthContext] State changed:', {
+            isAuthenticated,
+            currentUser: currentUser?.username,
+            timestamp: new Date().toISOString(),
+            path: window.location.pathname
+        });
+    }, [isAuthenticated, currentUser]);
+
     // Session management with localStorage (for client-side only)
     const saveSession = (user) => {
         if (user) {
@@ -131,6 +141,8 @@ export const AuthProvider = ({ children }) => {
 
     // Logout function
     const logout = () => {
+        console.log('[AuthContext] Logout called');
+        console.trace('[AuthContext] Logout call stack'); // Shows WHO called logout
         setCurrentUser(null);
         setIsAuthenticated(false);
         saveSession(null);

@@ -102,8 +102,14 @@ const RentalForm = ({ rental, onSave, onClose }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        e.stopPropagation(); // Prevent event bubbling
 
-        if (!validate()) return;
+        console.log('[RentalForm] Form submit triggered');
+
+        if (!validate()) {
+            console.log('[RentalForm] Validation failed');
+            return;
+        }
 
         const expirationDate = calculateExpirationDate(formData.startDate, formData.duration);
 

@@ -82,8 +82,15 @@ const Rentals = () => {
     };
 
     const handleSaveRental = async (rentalData) => {
+        console.log('[Rentals] Starting save rental:', {
+            isEditing: !!editingRental,
+            currentUser: currentUser?.username,
+            rentalData
+        });
+
         try {
             if (editingRental) {
+                console.log('[Rentals] Updating existing rental:', editingRental.id);
                 // Edit existing rental
                 await saveRental({
                     id: editingRental.id,
@@ -91,8 +98,10 @@ const Rentals = () => {
                     ...rentalData
                 });
             } else {
+                console.log('[Rentals] Creating new rental');
                 // Create new rental
                 const rentalId = await generateRentalId();
+                console.log('[Rentals] Generated rental ID:', rentalId);
                 await saveRental({
                     rentalId,
                     userId: currentUser.id,
@@ -100,12 +109,20 @@ const Rentals = () => {
                 });
             }
 
+            console.log('[Rentals] Save successful, closing form');
             setShowRentalForm(false);
             setEditingRental(null);
+            console.log('[Rentals] Reloading rentals list');
             await loadRentals();
+            console.log('[Rentals] Save operation completed');
         } catch (error) {
-            console.error('Error saving rental:', error);
-            alert('Error al guardar la renta');
+            console.error('[Rentals] Save failed with error:', error);
+            console.error('[Rentals] Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
+            alert('Error al guardar la renta: ' + error.message);
+            throw error; // Re-throw to ensure error is visible
         }
     };
 
