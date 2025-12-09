@@ -6,7 +6,8 @@ import RentalForm from '../components/RentalForm';
 import ReplacementForm from '../components/ReplacementForm';
 import { useAuth } from '../contexts/AuthContext';
 import { getRentals, saveRental, deleteRental, generateRentalId, saveReplacement } from '../utils/storage';
-import { Plus, Search, Filter } from 'lucide-react';
+import { exportActiveRentals } from '../utils/exportActiveRentals';
+import { Plus, Search, Filter, Download } from 'lucide-react';
 
 const Rentals = () => {
     const { currentUser } = useAuth();
@@ -170,7 +171,7 @@ const Rentals = () => {
 
     return (
         <Layout>
-            <div className="animate-fade-in">
+            <div>
                 <div className="flex-between" style={{ marginBottom: 'var(--spacing-2xl)' }}>
                     <div>
                         <h1 style={{ marginBottom: 'var(--spacing-xs)' }}>
@@ -181,16 +182,26 @@ const Rentals = () => {
                         </p>
                     </div>
 
-                    <button
-                        onClick={() => {
-                            setEditingRental(null);
-                            setShowRentalForm(true);
-                        }}
-                        className="btn btn-primary flex gap-sm"
-                    >
-                        <Plus size={20} />
-                        Nueva Renta
-                    </button>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                        <button
+                            onClick={() => exportActiveRentals(rentals, currentUser.username)}
+                            className="btn btn-secondary flex gap-sm"
+                            disabled={rentals.length === 0}
+                        >
+                            <Download size={20} />
+                            Descargar Activas
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditingRental(null);
+                                setShowRentalForm(true);
+                            }}
+                            className="btn btn-primary flex gap-sm"
+                        >
+                            <Plus size={20} />
+                            Nueva Renta
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}

@@ -79,7 +79,7 @@ const Users = () => {
 
     return (
         <Layout>
-            <div className="animate-fade-in">
+            <div>
                 <div className="flex-between" style={{ marginBottom: 'var(--spacing-2xl)' }}>
                     <div>
                         <h1 style={{ marginBottom: 'var(--spacing-xs)' }}>
