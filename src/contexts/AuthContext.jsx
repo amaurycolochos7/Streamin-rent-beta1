@@ -173,7 +173,7 @@ export const AuthProvider = ({ children }) => {
             return { success: true, user: newUser };
         } catch (error) {
             console.error('Create user error:', error);
-            return { success: false, error: 'Error al crear usuario' };
+            return { success: false, error: error.message || 'Error al crear usuario' };
         }
     };
 
