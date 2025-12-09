@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
         };
 
         restoreSession();
-    }, []);
+    }, []); // CRITICAL: Empty array = only run ONCE on mount, NOT on every state change
 
     // Login function
     const login = async (username, password) => {
