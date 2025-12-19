@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, Key, User, Package, CircleDot, DollarSign, Layers } from 'lucide-react';
 import { calculateExpirationDate, formatDateForInput } from '../utils/dateHelpers';
 import { getCustomPlatforms, addCustomPlatform } from '../utils/storage';
 import { useAuth } from '../contexts/AuthContext';
@@ -298,7 +298,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                         background: formData.accountType === 'full' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.03)',
                                         color: 'white', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
                                     }}>
-                                        🔑 Completa
+                                        <Key size={14} style={{ marginRight: '6px' }} /> Completa
                                     </button>
                                     <button type="button" onClick={() => setFormData(p => ({ ...p, accountType: 'profile' }))} style={{
                                         flex: 1, padding: '12px 10px', borderRadius: '10px',
@@ -306,7 +306,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                         background: formData.accountType === 'profile' ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255, 255, 255, 0.03)',
                                         color: 'white', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
                                     }}>
-                                        👤 Perfil
+                                        <User size={14} style={{ marginRight: '6px' }} /> Perfil
                                     </button>
                                 </div>
                             </div>
@@ -326,7 +326,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                         background: !formData.isCombo ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
                                         color: 'white', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer'
                                     }}>
-                                        1️⃣ Solo
+                                        <CircleDot size={14} style={{ marginRight: '6px' }} /> Solo
                                     </button>
                                     <button type="button" onClick={() => setFormData(p => ({ ...p, isCombo: true }))} style={{
                                         flex: 1, padding: '10px', borderRadius: '8px',
@@ -334,7 +334,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                         background: formData.isCombo ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
                                         color: 'white', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer'
                                     }}>
-                                        📦 Combo
+                                        <Package size={14} style={{ marginRight: '6px' }} /> Combo
                                     </button>
                                 </div>
                             </div>
@@ -353,7 +353,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                             background: formData.pricingType === 'total' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
                                             color: 'white', fontSize: '0.7rem', cursor: 'pointer'
                                         }}>
-                                            💰 Precio Total
+                                            <DollarSign size={13} style={{ marginRight: '4px' }} /> Precio Total
                                         </button>
                                         <button type="button" onClick={() => setFormData(p => ({ ...p, pricingType: 'individual' }))} style={{
                                             flex: 1, padding: '10px 8px', borderRadius: '8px',
@@ -361,7 +361,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                             background: formData.pricingType === 'individual' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
                                             color: 'white', fontSize: '0.7rem', cursor: 'pointer'
                                         }}>
-                                            💵 Por Cuenta
+                                            <Layers size={13} style={{ marginRight: '4px' }} /> Por Cuenta
                                         </button>
                                     </div>
                                 </div>
@@ -465,7 +465,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                         padding: '10px', background: 'rgba(245, 158, 11, 0.1)',
                                         borderRadius: '8px', marginBottom: '4px', fontSize: '0.75rem', color: 'var(--color-warning)'
                                     }}>
-                                        📦 Combo de {formData.accountType === 'full' ? 'Cuentas Completas' : 'Perfiles'}
+                                        <Package size={14} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Combo de {formData.accountType === 'full' ? 'Cuentas Completas' : 'Perfiles'}
                                         {' • '} {formData.pricingType === 'total' ? 'Precio Total' : 'Precio por Cuenta'}
                                     </div>
 
@@ -475,7 +475,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                             padding: '12px', background: 'rgba(16, 185, 129, 0.1)',
                                             borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)', marginBottom: '8px'
                                         }}>
-                                            <label style={{ fontSize: '0.7rem', color: 'var(--color-success)', display: 'block', marginBottom: '4px' }}>💰 Precio Total del Combo ({currencySymbol}) *</label>
+                                            <label style={{ fontSize: '0.7rem', color: 'var(--color-success)', display: 'block', marginBottom: '4px' }}>Precio Total del Combo ({currencySymbol}) *</label>
                                             <input type="number" name="comboPrice" value={formData.comboPrice} onChange={handleChange}
                                                 placeholder="0" min="0" style={{
                                                     width: '100%', padding: '11px', fontSize: '1rem', fontWeight: 700,
@@ -494,7 +494,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
                                         }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-primary-light)' }}>
-                                                    {formData.accountType === 'full' ? '🔑' : '👤'} Cuenta {index + 1}
+                                                    {formData.accountType === 'full' ? <Key size={12} /> : <User size={12} />} Cuenta {index + 1}
                                                 </span>
                                                 {comboAccounts.length > 1 && (
                                                     <button type="button" onClick={() => removeComboAccount(index)} style={{
@@ -624,10 +624,16 @@ const RentalForm = ({ rental, onSave, onClose }) => {
 
                                 <div style={{ marginBottom: '8px' }}>
                                     <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'white' }}>{formData.customerName || '-'}</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                        {formData.accountType === 'full' ? '🔑 Cuenta Completa' : '👤 Perfil'}
-                                        {' • '}
-                                        {formData.isCombo ? `📦 Combo (${comboAccounts.length} cuentas)` : '1️⃣ Solo'}
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                            {formData.accountType === 'full' ? <Key size={11} /> : <User size={11} />}
+                                            {formData.accountType === 'full' ? 'Completa' : 'Perfil'}
+                                        </span>
+                                        <span style={{ opacity: 0.5 }}>•</span>
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                            {formData.isCombo ? <Package size={11} /> : <CircleDot size={11} />}
+                                            {formData.isCombo ? `Combo (${comboAccounts.length})` : 'Solo'}
+                                        </span>
                                     </div>
                                 </div>
 

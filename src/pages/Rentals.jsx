@@ -164,30 +164,30 @@ const Rentals = () => {
         return (
             <Layout>
                 <div>
-                    {/* Compact Header */}
+                    {/* Header */}
                     <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        marginBottom: '12px'
+                        marginBottom: '10px'
                     }}>
                         <h1 style={{
-                            fontSize: '1.3rem',
                             margin: 0,
+                            fontSize: '1.2rem',
                             background: 'linear-gradient(135deg, var(--color-primary-light), var(--color-secondary-light))',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent'
                         }}>
                             Rentas
                         </h1>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '6px' }}>
                             <button
                                 onClick={() => exportActiveRentals(rentals, currentUser.username)}
                                 disabled={rentals.length === 0}
                                 style={{
-                                    width: '38px',
-                                    height: '38px',
-                                    borderRadius: '10px',
+                                    width: '34px',
+                                    height: '34px',
+                                    borderRadius: '8px',
                                     background: 'rgba(6, 182, 212, 0.15)',
                                     border: '1px solid rgba(6, 182, 212, 0.3)',
                                     color: 'var(--color-secondary-light)',
@@ -197,7 +197,7 @@ const Rentals = () => {
                                     cursor: 'pointer'
                                 }}
                             >
-                                <Download size={18} />
+                                <Download size={16} />
                             </button>
                             <button
                                 onClick={() => {
@@ -205,9 +205,9 @@ const Rentals = () => {
                                     setShowRentalForm(true);
                                 }}
                                 style={{
-                                    width: '38px',
-                                    height: '38px',
-                                    borderRadius: '10px',
+                                    width: '34px',
+                                    height: '34px',
+                                    borderRadius: '8px',
                                     background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
                                     border: 'none',
                                     color: 'white',
@@ -215,26 +215,28 @@ const Rentals = () => {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)'
+                                    boxShadow: '0 2px 8px rgba(168, 85, 247, 0.3)'
                                 }}
                             >
-                                <Plus size={20} />
+                                <Plus size={18} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Search & Filter - Compact */}
+                    {/* Search, Filter & View Toggle - All in one row */}
                     <div style={{
                         display: 'flex',
-                        gap: '8px',
-                        marginBottom: '12px'
+                        gap: '6px',
+                        marginBottom: '10px',
+                        alignItems: 'center'
                     }}>
+                        {/* Search */}
                         <div style={{ flex: 1, position: 'relative' }}>
                             <Search
-                                size={16}
+                                size={14}
                                 style={{
                                     position: 'absolute',
-                                    left: '10px',
+                                    left: '8px',
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     color: 'var(--color-text-muted)'
@@ -247,83 +249,77 @@ const Rentals = () => {
                                 placeholder="Buscar..."
                                 style={{
                                     width: '100%',
-                                    padding: '10px 10px 10px 32px',
+                                    padding: '8px 8px 8px 28px',
                                     background: 'rgba(255, 255, 255, 0.05)',
                                     border: '1px solid var(--glass-border)',
-                                    borderRadius: '10px',
+                                    borderRadius: '8px',
                                     color: 'var(--color-text-primary)',
-                                    fontSize: '0.85rem'
+                                    fontSize: '0.8rem'
                                 }}
                             />
                         </div>
+
+                        {/* Filter Dropdown */}
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                             style={{
-                                padding: '10px',
-                                background: 'rgba(255, 255, 255, 0.05)',
+                                padding: '8px 6px',
+                                background: '#1a0a2e',
                                 border: '1px solid var(--glass-border)',
-                                borderRadius: '10px',
+                                borderRadius: '8px',
                                 color: 'var(--color-text-primary)',
-                                fontSize: '0.8rem'
+                                fontSize: '0.7rem',
+                                minWidth: '70px'
                             }}
                         >
                             <option value="all">Todas</option>
                             <option value="active">Activas</option>
-                            <option value="expiring">Por Vencer</option>
-                            <option value="expired">Expiradas</option>
+                            <option value="expiring">Vencer</option>
+                            <option value="expired">Exp.</option>
                         </select>
-                    </div>
 
-                    {/* View Toggle */}
-                    <div style={{
-                        display: 'flex',
-                        gap: '4px',
-                        marginBottom: '12px',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        borderRadius: '8px',
-                        padding: '4px'
-                    }}>
-                        <button
-                            onClick={() => setViewMode('grouped')}
-                            style={{
-                                flex: 1,
-                                padding: '8px',
-                                borderRadius: '6px',
-                                border: 'none',
-                                background: viewMode === 'grouped' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
-                                color: viewMode === 'grouped' ? 'var(--color-primary-light)' : 'var(--color-text-muted)',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '4px'
-                            }}
-                        >
-                            <Users size={14} /> Por Cliente
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            style={{
-                                flex: 1,
-                                padding: '8px',
-                                borderRadius: '6px',
-                                border: 'none',
-                                background: viewMode === 'list' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
-                                color: viewMode === 'list' ? 'var(--color-primary-light)' : 'var(--color-text-muted)',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '4px'
-                            }}
-                        >
-                            <List size={14} /> Lista
-                        </button>
+                        {/* View Toggle - Compact icons only */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '2px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: '8px',
+                            padding: '2px'
+                        }}>
+                            <button
+                                onClick={() => setViewMode('grouped')}
+                                title="Por Cliente"
+                                style={{
+                                    padding: '6px 8px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: viewMode === 'grouped' ? 'rgba(168, 85, 247, 0.3)' : 'transparent',
+                                    color: viewMode === 'grouped' ? 'var(--color-primary-light)' : 'var(--color-text-muted)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <Users size={14} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                title="Lista"
+                                style={{
+                                    padding: '6px 8px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: viewMode === 'list' ? 'rgba(168, 85, 247, 0.3)' : 'transparent',
+                                    color: viewMode === 'list' ? 'var(--color-primary-light)' : 'var(--color-text-muted)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <List size={14} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Content */}
