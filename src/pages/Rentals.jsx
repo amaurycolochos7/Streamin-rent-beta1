@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
 import RentalCard from '../components/RentalCard';
+import CustomerGroup from '../components/CustomerGroup';
 import RentalForm from '../components/RentalForm';
 import ReplacementForm from '../components/ReplacementForm';
 import { useAuth } from '../contexts/AuthContext';
 import { getRentals, saveRental, deleteRental, generateRentalId, saveReplacement } from '../utils/storage';
 import { exportActiveRentals } from '../utils/exportActiveRentals';
-import { Plus, Search, Filter, Download } from 'lucide-react';
+import { Plus, Search, Filter, Download, Users, List } from 'lucide-react';
 
 const Rentals = () => {
     const { currentUser } = useAuth();
@@ -20,20 +21,23 @@ const Rentals = () => {
     const [showReplacementForm, setShowReplacementForm] = useState(false);
     const [editingRental, setEditingRental] = useState(null);
     const [replacementRental, setReplacementRental] = useState(null);
-
+    const [isMobile, setIsMobile] = useState(false);
+    const [viewMode, setViewMode] = useState('grouped'); // 'grouped' or 'list'
 
     useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
         loadRentals();
 
-        // Check if we came here with an edit intent
         if (location.state?.editRental) {
             handleEdit(location.state.editRental);
         }
-
-        // Check if we came here with a filter from Dashboard
         if (location.state?.filter) {
             setFilterStatus(location.state.filter);
         }
+
+        return () => window.removeEventListener('resize', checkMobile);
     }, [currentUser, location.state]);
 
     useEffect(() => {
@@ -42,19 +46,15 @@ const Rentals = () => {
 
     const loadRentals = async () => {
         const allRentals = await getRentals();
-
-        // Filter rentals based on user role
         const userRentals = currentUser.role === 'admin'
             ? allRentals
             : allRentals.filter(r => r.userId === currentUser.id);
-
         setRentals(userRentals);
     };
 
     const filterRentals = () => {
         let filtered = [...rentals];
 
-        // Enhanced search filter - searches in ID, customer name, and account email
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(r =>
@@ -65,7 +65,6 @@ const Rentals = () => {
             );
         }
 
-        // Status filter
         if (filterStatus !== 'all') {
             const now = new Date();
             filtered = filtered.filter(r => {
@@ -82,27 +81,26 @@ const Rentals = () => {
         setFilteredRentals(filtered);
     };
 
-    const handleSaveRental = async (rentalData) => {
-        console.log('[Rentals] Starting save rental:', {
-            isEditing: !!editingRental,
-            currentUser: currentUser?.username,
-            rentalData
-        });
+    // Group rentals by customer name
+    const groupedRentals = filteredRentals.reduce((groups, rental) => {
+        const name = rental.customerName.toLowerCase().trim();
+        if (!groups[name]) {
+            groups[name] = [];
+        }
+        groups[name].push(rental);
+        return groups;
+    }, {});
 
+    const handleSaveRental = async (rentalData) => {
         try {
             if (editingRental) {
-                console.log('[Rentals] Updating existing rental:', editingRental.id);
-                // Edit existing rental
                 await saveRental({
                     id: editingRental.id,
                     userId: currentUser.id,
                     ...rentalData
                 });
             } else {
-                console.log('[Rentals] Creating new rental');
-                // Create new rental
                 const rentalId = await generateRentalId();
-                console.log('[Rentals] Generated rental ID:', rentalId);
                 await saveRental({
                     rentalId,
                     userId: currentUser.id,
@@ -110,32 +108,24 @@ const Rentals = () => {
                 });
             }
 
-            console.log('[Rentals] Save successful, closing form');
             setShowRentalForm(false);
             setEditingRental(null);
-            console.log('[Rentals] Reloading rentals list');
             await loadRentals();
-            console.log('[Rentals] Save operation completed');
         } catch (error) {
-            console.error('[Rentals] Save failed with error:', error);
-            console.error('[Rentals] Error details:', {
-                message: error.message,
-                stack: error.stack
-            });
+            console.error('Save failed:', error);
             alert('Error al guardar la renta: ' + error.message);
-            throw error; // Re-throw to ensure error is visible
         }
     };
 
     const handleDelete = async (rentalId) => {
-        if (!confirm('¿Estás seguro de eliminar esta renta?')) return;
+        if (!confirm('¿Eliminar esta renta?')) return;
 
         try {
             await deleteRental(rentalId);
             await loadRentals();
         } catch (error) {
-            console.error('Error deleting rental:', error);
-            alert('Error al eliminar la renta');
+            console.error('Error deleting:', error);
+            alert('Error al eliminar');
         }
     };
 
@@ -164,11 +154,257 @@ const Rentals = () => {
             setReplacementRental(null);
             await loadRentals();
         } catch (error) {
-            console.error('Error saving replacement:', error);
-            alert('Error al guardar la reposición');
+            console.error('Error:', error);
+            alert('Error al guardar');
         }
     };
 
+    // MOBILE VERSION
+    if (isMobile) {
+        return (
+            <Layout>
+                <div>
+                    {/* Compact Header */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '12px'
+                    }}>
+                        <h1 style={{
+                            fontSize: '1.3rem',
+                            margin: 0,
+                            background: 'linear-gradient(135deg, var(--color-primary-light), var(--color-secondary-light))',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                        }}>
+                            Rentas
+                        </h1>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                onClick={() => exportActiveRentals(rentals, currentUser.username)}
+                                disabled={rentals.length === 0}
+                                style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '10px',
+                                    background: 'rgba(6, 182, 212, 0.15)',
+                                    border: '1px solid rgba(6, 182, 212, 0.3)',
+                                    color: 'var(--color-secondary-light)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <Download size={18} />
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setEditingRental(null);
+                                    setShowRentalForm(true);
+                                }}
+                                style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '10px',
+                                    background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
+                                    border: 'none',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)'
+                                }}
+                            >
+                                <Plus size={20} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Search & Filter - Compact */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        marginBottom: '12px'
+                    }}>
+                        <div style={{ flex: 1, position: 'relative' }}>
+                            <Search
+                                size={16}
+                                style={{
+                                    position: 'absolute',
+                                    left: '10px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    color: 'var(--color-text-muted)'
+                                }}
+                            />
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Buscar..."
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 10px 10px 32px',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid var(--glass-border)',
+                                    borderRadius: '10px',
+                                    color: 'var(--color-text-primary)',
+                                    fontSize: '0.85rem'
+                                }}
+                            />
+                        </div>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            style={{
+                                padding: '10px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid var(--glass-border)',
+                                borderRadius: '10px',
+                                color: 'var(--color-text-primary)',
+                                fontSize: '0.8rem'
+                            }}
+                        >
+                            <option value="all">Todas</option>
+                            <option value="active">Activas</option>
+                            <option value="expiring">Por Vencer</option>
+                            <option value="expired">Expiradas</option>
+                        </select>
+                    </div>
+
+                    {/* View Toggle */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '4px',
+                        marginBottom: '12px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        borderRadius: '8px',
+                        padding: '4px'
+                    }}>
+                        <button
+                            onClick={() => setViewMode('grouped')}
+                            style={{
+                                flex: 1,
+                                padding: '8px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                background: viewMode === 'grouped' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
+                                color: viewMode === 'grouped' ? 'var(--color-primary-light)' : 'var(--color-text-muted)',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '4px'
+                            }}
+                        >
+                            <Users size={14} /> Por Cliente
+                        </button>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            style={{
+                                flex: 1,
+                                padding: '8px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                background: viewMode === 'list' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
+                                color: viewMode === 'list' ? 'var(--color-primary-light)' : 'var(--color-text-muted)',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '4px'
+                            }}
+                        >
+                            <List size={14} /> Lista
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    {filteredRentals.length > 0 ? (
+                        viewMode === 'grouped' ? (
+                            // GROUPED VIEW - By Customer
+                            <div>
+                                {Object.entries(groupedRentals)
+                                    .sort((a, b) => a[0].localeCompare(b[0]))
+                                    .map(([name, customerRentals]) => (
+                                        <CustomerGroup
+                                            key={name}
+                                            customerName={customerRentals[0].customerName}
+                                            rentals={customerRentals}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                            onAddReplacement={handleAddReplacement}
+                                            currencySymbol={currentUser?.currency || '$'}
+                                        />
+                                    ))}
+                            </div>
+                        ) : (
+                            // LIST VIEW - Individual cards
+                            <div>
+                                {filteredRentals.map(rental => (
+                                    <RentalCard
+                                        key={rental.id}
+                                        rental={rental}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                        onAddReplacement={handleAddReplacement}
+                                    />
+                                ))}
+                            </div>
+                        )
+                    ) : (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '40px 20px',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            borderRadius: '12px'
+                        }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '10px', opacity: 0.3 }}>
+                                {searchTerm || filterStatus !== 'all' ? '🔍' : '📋'}
+                            </div>
+                            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                                {searchTerm || filterStatus !== 'all'
+                                    ? 'Sin resultados'
+                                    : 'No hay rentas aún'}
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Modals */}
+                {showRentalForm && (
+                    <RentalForm
+                        rental={editingRental}
+                        onSave={handleSaveRental}
+                        onClose={() => {
+                            setShowRentalForm(false);
+                            setEditingRental(null);
+                        }}
+                    />
+                )}
+
+                {showReplacementForm && (
+                    <ReplacementForm
+                        rental={replacementRental}
+                        onSave={handleSaveReplacement}
+                        onClose={() => {
+                            setShowReplacementForm(false);
+                            setReplacementRental(null);
+                        }}
+                    />
+                )}
+            </Layout>
+        );
+    }
+
+    // DESKTOP VERSION
     return (
         <Layout>
             <div>
@@ -204,7 +440,6 @@ const Rentals = () => {
                     </div>
                 </div>
 
-                {/* Filters */}
                 <div className="glass-card" style={{ marginBottom: 'var(--spacing-lg)' }}>
                     <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: '250px' }}>
@@ -247,7 +482,6 @@ const Rentals = () => {
                     </div>
                 </div>
 
-                {/* Rentals Grid */}
                 {filteredRentals.length > 0 ? (
                     <div className="grid grid-3">
                         {filteredRentals.map(rental => (
@@ -262,11 +496,7 @@ const Rentals = () => {
                     </div>
                 ) : (
                     <div className="glass-card text-center" style={{ padding: 'var(--spacing-2xl)' }}>
-                        <div style={{
-                            fontSize: '4rem',
-                            marginBottom: 'var(--spacing-lg)',
-                            opacity: 0.3
-                        }}>
+                        <div style={{ fontSize: '4rem', marginBottom: 'var(--spacing-lg)', opacity: 0.3 }}>
                             {searchTerm || filterStatus !== 'all' ? '🔍' : '📋'}
                         </div>
                         <h2>
@@ -276,14 +506,13 @@ const Rentals = () => {
                         </h2>
                         <p style={{ color: 'var(--color-text-muted)' }}>
                             {searchTerm || filterStatus !== 'all'
-                                ? 'Intenta con otros términos de búsqueda'
+                                ? 'Intenta con otros términos'
                                 : 'Comienza agregando tu primera renta'}
                         </p>
                     </div>
                 )}
             </div>
 
-            {/* Rental Form Modal */}
             {showRentalForm && (
                 <RentalForm
                     rental={editingRental}
@@ -295,7 +524,6 @@ const Rentals = () => {
                 />
             )}
 
-            {/* Replacement Form Modal */}
             {showReplacementForm && (
                 <ReplacementForm
                     rental={replacementRental}

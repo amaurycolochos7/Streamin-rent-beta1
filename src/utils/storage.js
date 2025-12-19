@@ -165,6 +165,7 @@ export const getRentals = async (userId = null) => {
             userId: rental.user_id,
             platform: rental.platform,
             customerName: rental.customer_name,
+            phoneNumber: rental.phone_number,
             accountType: rental.account_type,
             profileName: rental.profile_name,
             accountEmail: rental.account_email,
@@ -174,6 +175,11 @@ export const getRentals = async (userId = null) => {
             startDate: rental.start_date,
             expirationDate: rental.expiration_date,
             notes: rental.notes,
+            // Combo fields
+            isCombo: rental.is_combo || false,
+            pricingType: rental.pricing_type || 'total',
+            comboPrice: rental.combo_price ? parseFloat(rental.combo_price) : null,
+            accounts: rental.accounts || [],
             replacements: [] // We'll load these separately if needed
         }));
     } catch (error) {
@@ -188,6 +194,7 @@ export const saveRental = async (rental) => {
             user_id: rental.userId,
             platform: rental.platform,
             customer_name: rental.customerName,
+            phone_number: rental.phoneNumber || null,
             account_type: rental.accountType || 'full',
             profile_name: rental.profileName || null,
             account_email: rental.accountEmail,
@@ -196,7 +203,12 @@ export const saveRental = async (rental) => {
             duration: rental.duration,
             start_date: rental.startDate,
             expiration_date: rental.expirationDate,
-            notes: rental.notes || null
+            notes: rental.notes || null,
+            // Combo fields
+            is_combo: rental.isCombo || false,
+            pricing_type: rental.pricingType || 'total',
+            combo_price: rental.comboPrice || null,
+            accounts: rental.accounts || []
         };
 
         if (rental.id) {

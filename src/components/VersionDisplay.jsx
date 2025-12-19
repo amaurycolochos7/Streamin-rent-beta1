@@ -1,16 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const VersionDisplay = () => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     return (
         <>
             <div style={{
                 position: 'fixed',
-                bottom: '20px',
-                left: '20px',
-                fontSize: '0.75rem',
+                bottom: isMobile ? '12px' : '20px',
+                left: isMobile ? '12px' : '20px',
+                fontSize: isMobile ? '0.65rem' : '0.75rem',
                 fontWeight: 600,
                 color: 'rgba(255, 255, 255, 0.4)',
-                padding: '6px 12px',
+                padding: isMobile ? '4px 8px' : '6px 12px',
                 background: 'rgba(0, 0, 0, 0.2)',
                 borderRadius: '8px',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
