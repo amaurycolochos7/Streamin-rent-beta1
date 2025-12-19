@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { encryptData, decryptData, encryptComboAccounts, decryptComboAccounts } from './security';
 
 // ===== USER MANAGEMENT =====
 
@@ -168,8 +169,8 @@ export const getRentals = async (userId = null) => {
             phoneNumber: rental.phone_number,
             accountType: rental.account_type,
             profileName: rental.profile_name,
-            accountEmail: rental.account_email,
-            accountPassword: rental.account_password,
+            accountEmail: decryptData(rental.account_email),
+            accountPassword: decryptData(rental.account_password),
             price: parseFloat(rental.price),
             duration: rental.duration,
             startDate: rental.start_date,
@@ -179,7 +180,7 @@ export const getRentals = async (userId = null) => {
             isCombo: rental.is_combo || false,
             pricingType: rental.pricing_type || 'total',
             comboPrice: rental.combo_price ? parseFloat(rental.combo_price) : null,
-            accounts: rental.accounts || [],
+            accounts: decryptComboAccounts(rental.accounts || []),
             replacements: [] // We'll load these separately if needed
         }));
     } catch (error) {
@@ -197,8 +198,8 @@ export const saveRental = async (rental) => {
             phone_number: rental.phoneNumber || null,
             account_type: rental.accountType || 'full',
             profile_name: rental.profileName || null,
-            account_email: rental.accountEmail,
-            account_password: rental.accountPassword,
+            account_email: encryptData(rental.accountEmail),
+            account_password: encryptData(rental.accountPassword),
             price: rental.price,
             duration: rental.duration,
             start_date: rental.startDate,
@@ -208,7 +209,7 @@ export const saveRental = async (rental) => {
             is_combo: rental.isCombo || false,
             pricing_type: rental.pricingType || 'total',
             combo_price: rental.comboPrice || null,
-            accounts: rental.accounts || []
+            accounts: encryptComboAccounts(rental.accounts || [])
         };
 
         if (rental.id) {

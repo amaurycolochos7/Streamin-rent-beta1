@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import VersionDisplay from './components/VersionDisplay';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Rentals from './pages/Rentals';
@@ -13,7 +12,6 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <VersionDisplay />
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />

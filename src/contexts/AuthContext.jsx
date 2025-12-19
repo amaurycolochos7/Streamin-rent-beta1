@@ -115,8 +115,8 @@ export const AuthProvider = ({ children }) => {
                 return { success: false, error: 'Usuario no encontrado' };
             }
 
-            // Validate password
-            const isValid = validatePassword(password, user.password);
+            // Validate password (now async for bcrypt support)
+            const isValid = await validatePassword(password, user.password);
 
             if (!isValid) {
                 return { success: false, error: 'Contraseña incorrecta' };
