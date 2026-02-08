@@ -55,7 +55,7 @@ const RentalCard = ({ rental, onEdit, onDelete, onAddReplacement }) => {
             }}>
                 {/* Main Row - Clickable to expand */}
                 <div
-                    onClick={() => setIsExpanded(!isExpanded)}
+                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
                     style={{
                         display: 'flex',
                         alignItems: 'center',

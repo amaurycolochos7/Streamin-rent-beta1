@@ -21,7 +21,7 @@ const RentalForm = ({ rental, onSave, onClose }) => {
         phoneNumber: rental?.phoneNumber || '',
         accountType: rental?.accountType || 'full', // 'full' = Completa, 'profile' = Perfil
         isCombo: rental?.isCombo || false,
-        pricingType: 'total',
+        pricingType: rental?.pricingType || (rental?.comboPrice !== undefined && rental?.comboPrice !== null ? 'total' : 'individual'),
         comboPrice: rental?.comboPrice || '',
         duration: rental?.duration || 1,
         startDate: rental?.startDate ? formatDateForInput(rental.startDate) : formatDateForInput(new Date().toISOString()),
@@ -52,6 +52,44 @@ const RentalForm = ({ rental, onSave, onClose }) => {
     const [customPlatforms, setCustomPlatforms] = useState([]);
     const [showAddPlatform, setShowAddPlatform] = useState(false);
     const [newPlatformName, setNewPlatformName] = useState('');
+
+    // Sync state with rental prop when it changes (for editing)
+    useEffect(() => {
+        if (rental) {
+            setFormData({
+                customerName: rental.customerName || '',
+                phoneNumber: rental.phoneNumber || '',
+                accountType: rental.accountType || 'full',
+                isCombo: rental.isCombo || false,
+                pricingType: rental.pricingType || (rental.comboPrice !== undefined && rental.comboPrice !== null ? 'total' : 'individual'),
+                comboPrice: rental.comboPrice || '',
+                duration: rental.duration || 1,
+                startDate: rental.startDate ? formatDateForInput(rental.startDate) : formatDateForInput(new Date().toISOString()),
+                notes: rental.notes || ''
+            });
+
+            setSingleAccount({
+                platform: rental.platform || '',
+                profileName: rental.profileName || '',
+                accountEmail: rental.accountEmail || '',
+                accountPassword: rental.accountPassword || '',
+                price: rental.price || ''
+            });
+
+            if (rental.accounts && rental.accounts.length > 0) {
+                setComboAccounts(rental.accounts);
+            } else if (!rental.isCombo) {
+                // Only reset to empty if NOT editing a combo
+                setComboAccounts([{
+                    platform: '',
+                    profileName: '',
+                    accountEmail: '',
+                    accountPassword: '',
+                    price: ''
+                }]);
+            }
+        }
+    }, [rental]);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);

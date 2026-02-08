@@ -83,7 +83,7 @@ const CustomerGroup = ({ customerName, rentals, onEdit, onDelete, onAddReplaceme
         }}>
             {/* Header - Always visible */}
             <div
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
                 style={{
                     display: 'flex',
                     alignItems: 'center',

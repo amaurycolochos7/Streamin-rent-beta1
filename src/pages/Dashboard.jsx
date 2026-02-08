@@ -235,7 +235,7 @@ const Dashboard = () => {
                                     return (
                                         <div
                                             key={rental.id}
-                                            onClick={() => navigate('/rentals')}
+                                            onClick={() => navigate('/rentals', { state: { editRental: rental } })}
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
