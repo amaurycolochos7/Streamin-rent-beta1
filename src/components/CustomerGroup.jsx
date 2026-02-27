@@ -277,15 +277,18 @@ const CustomerGroup = ({ customerName, rentals, onEdit, onDelete, onAddReplaceme
                                             fontSize: '0.75rem',
                                             background: 'rgba(0, 0, 0, 0.3)',
                                             padding: '8px',
-                                            borderRadius: '6px'
+                                            borderRadius: '6px',
+                                            wordBreak: 'break-all',
+                                            overflowWrap: 'anywhere',
+                                            overflow: 'hidden'
                                         }}>
-                                            <div style={{ marginBottom: '4px' }}>
-                                                <span style={{ color: 'var(--color-text-muted)' }}>📧 </span>
-                                                <span style={{ color: 'var(--color-secondary-light)' }}>{acc.accountEmail}</span>
+                                            <div style={{ marginBottom: '6px' }}>
+                                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.65rem', marginBottom: '2px' }}>Email:</div>
+                                                <div style={{ color: 'var(--color-secondary-light)', wordBreak: 'break-all' }}>{acc.accountEmail}</div>
                                             </div>
                                             <div>
-                                                <span style={{ color: 'var(--color-text-muted)' }}>🔑 </span>
-                                                <span style={{ color: 'var(--color-secondary-light)' }}>{acc.accountPassword}</span>
+                                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.65rem', marginBottom: '2px' }}>Password:</div>
+                                                <div style={{ color: 'var(--color-secondary-light)', wordBreak: 'break-all' }}>{acc.accountPassword}</div>
                                             </div>
                                         </div>
                                     </div>
